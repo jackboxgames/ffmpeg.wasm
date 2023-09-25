@@ -142,19 +142,31 @@ COPY --from=libass-builder $INSTALL_DIR $INSTALL_DIR
 FROM ffmpeg-base AS ffmpeg-builder
 COPY build/ffmpeg.sh /src/build.sh
 RUN bash -x /src/build.sh \
+      --disable-all \
       --enable-gpl \
+      --enable-nonfree \
       --enable-libx264 \
-      --enable-libx265 \
-      --enable-libvpx \
       --enable-libmp3lame \
-      --enable-libtheora \
-      --enable-libvorbis \
-      --enable-libopus \
       --enable-zlib \
-      --enable-libwebp \
-      --enable-libfreetype \
-      --enable-libfribidi \
-      --enable-libass
+      --enable-protocol=file \
+      --enable-avcodec \
+      --enable-avformat \
+      --enable-avfilter \
+      --enable-avdevice \
+      --enable-postproc \
+      --enable-swresample \
+      --enable-swscale \
+      --enable-demuxer=mp4,mp3 \
+      --enable-decoder=h264,mp3 \
+      --enable-encoder=libx264,libmp3lame \
+      --enable-parser=h264,mpegaudio \
+      --enable-muxer=mp4,mp3 \
+      --enable-filter=trim,atrim \
+      --enable-filter=buffersink,scale,format,fps \
+      --enable-filter=abuffersink,aformat \
+      --enable-filter=transpose,hflip,vflip \
+      --enable-filter=abuffer \
+      --enable-filter=amix,aresample
 
 # Build ffmpeg.wasm
 FROM ffmpeg-builder AS ffmpeg-wasm-builder
@@ -164,21 +176,9 @@ COPY build/ffmpeg-wasm.sh build.sh
 # libraries to link
 ENV FFMPEG_LIBS \
       -lx264 \
-      -lx265 \
-      -lvpx \
       -lmp3lame \
-      -logg \
-      -ltheora \
-      -lvorbis \
-      -lvorbisenc \
-      -lvorbisfile \
-      -lopus \
       -lz \
-      -lwebp \
-      -lfreetype \
-      -lfribidi \
-      -lharfbuzz \
-      -lass
+      -lharfbuzz
 RUN mkdir -p /src/dist/umd && bash -x /src/build.sh \
       ${FFMPEG_LIBS} \
       -o dist/umd/ffmpeg-core.js
