@@ -184,12 +184,17 @@ export class FFmpeg {
    * @category FFmpeg
    * @returns `true` if ffmpeg core is loaded for the first time.
    */
-  public load = (
+  public load = async (
     config: FFMessageLoadConfig = {},
     { signal }: FFMessageOptions = {}
   ): Promise<IsFirst> => {
     if (!this.#worker) {
-      this.#worker = new Worker(new URL("./worker.js", import.meta.url), {
+      const blob = await fetch("./worker.js").then((response) => {
+        return response.arrayBuffer()
+      }).then((buffer) => {
+        return new Blob([buffer], { type: 'text/javascript'})
+      })
+      this.#worker = new Worker(URL.createObjectURL(blob), {
         type: "module",
       });
       this.#registerHandlers();
